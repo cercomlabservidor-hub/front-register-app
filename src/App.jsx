@@ -207,11 +207,15 @@ const createInitialForm = () => ({
   profession: "",
   experienceValue: "",
   experienceUnit: "MESES",
+  experienceMode: "TOTAL_MONTHS",
+  experienceYears: "",
+  experienceMonths: "",
   hasSpecialNeeds: "",
   specialNeedsDescription: "",
   requestType: "CERTIFICACIÓN",
   selectedScheme: "",
   otherSchemeName: "",
+  certificationStudyType: "",
   modality: "",
   attachmentsAcknowledged: false,
   prerequisitesAccepted: false,
@@ -237,6 +241,13 @@ function Field({ label, error, hint, required = false, children }) {
 }
 
 function DataPolicyPage() {
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('policySeen','1');
+      window.dispatchEvent(new Event('policyVisited'));
+    } catch (e) {}
+  }, []);
+
   return (
     <main className="app-shell">
       <section className="policy-hero">
@@ -335,6 +346,13 @@ function App() {
   const [signatureDataUrl, setSignatureDataUrl] = useState("");
   const [submittedRecord, setSubmittedRecord] = useState(null);
   const [route, setRoute] = useState(() => window.location.hash || FORM_ROUTE);
+  const [policyVisited, setPolicyVisited] = useState(() => {
+    try {
+      return sessionStorage.getItem('policySeen') === '1';
+    } catch (e) {
+      return false;
+    }
+  });
 
   const canvasRef = useRef(null);
   const drawingRef = useRef(false);
@@ -376,13 +394,18 @@ function App() {
   useEffect(() => {
     const syncRoute = () => {
       setRoute(window.location.hash || FORM_ROUTE);
+      setPolicyVisited(sessionStorage.getItem('policySeen') === '1');
     };
 
+    const onPolicyVisited = () => setPolicyVisited(true);
+
     window.addEventListener("hashchange", syncRoute);
+    window.addEventListener("policyVisited", onPolicyVisited);
     syncRoute();
 
     return () => {
       window.removeEventListener("hashchange", syncRoute);
+      window.removeEventListener("policyVisited", onPolicyVisited);
     };
   }, []);
 
@@ -395,22 +418,28 @@ function App() {
   }, [currentStep, signatureDataUrl]);
 
   const updateField = (name, value) => {
-    setFormData((previous) => {
-      const next = { ...previous, [name]: value };
+    // Normalize textual input to uppercase except for email fields
+    let normalized = value;
+    if (typeof value === "string" && name !== "email") {
+      normalized = value.toUpperCase();
+    }
 
-      if (name === "documentType" && value !== "OTRO") {
+    setFormData((previous) => {
+      const next = { ...previous, [name]: normalized };
+
+      if (name === "documentType" && normalized !== "OTRO") {
         next.otherDocumentType = "";
       }
 
-      if (name === "employmentStatus" && value !== "EMPLEADO") {
+      if (name === "employmentStatus" && normalized !== "EMPLEADO") {
         next.companyName = "";
       }
 
-      if (name === "hasSpecialNeeds" && value !== "SI") {
+      if (name === "hasSpecialNeeds" && normalized !== "SI") {
         next.specialNeedsDescription = "";
       }
 
-      if (name === "selectedScheme" && value !== "OTRO ESQUEMA") {
+      if (name === "selectedScheme" && normalized !== "OTRO ESQUEMA") {
         next.otherSchemeName = "";
       }
 
@@ -521,6 +550,16 @@ function App() {
     prepareCanvas("");
   };
 
+  const handleSignatureUpload = (event) => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSignatureDataUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const collectStepErrors = (stepIndex) => {
     const nextErrors = {};
 
@@ -566,14 +605,20 @@ function App() {
       ) {
         nextErrors.email = "Ingresa un correo electrónico válido.";
       }
+
+      // Validar teléfonos: entre 7 y 15 dígitos (sin contar caracteres no numéricos)
+      ["phone", "cellphone"].forEach((f) => {
+        const raw = String(formData[f] ?? "").replace(/\D/g, "");
+        if (raw && (raw.length < 7 || raw.length > 15)) {
+          nextErrors[f] = "Ingresa un número válido (7-15 dígitos).";
+        }
+      });
     }
 
     if (stepIndex === 1) {
       const requiredFields = {
         employmentStatus: "Selecciona tu condición laboral.",
         profession: "Ingresa tu profesión, ocupación u oficio.",
-        experienceValue: "Indica el tiempo de experiencia.",
-        experienceUnit: "Selecciona la unidad de experiencia.",
         hasSpecialNeeds:
           "Indica si cuentas con impedimentos físicos o necesidades especiales.",
       };
@@ -583,6 +628,26 @@ function App() {
           nextErrors[fieldName] = message;
         }
       });
+
+      // Experiencia: soporte para modo años+meses o meses totales
+      if (formData.experienceMode === "TOTAL_MONTHS") {
+        if (!String(formData.experienceValue ?? "").trim()) {
+          nextErrors.experienceValue = "Indica el tiempo de experiencia.";
+        } else if (!/^\d+$/.test(String(formData.experienceValue))) {
+          nextErrors.experienceValue = "Ingresa un número válido.";
+        }
+        if (!String(formData.experienceUnit ?? "").trim()) {
+          nextErrors.experienceUnit = "Selecciona la unidad de experiencia.";
+        }
+      } else {
+        const years = parseInt(formData.experienceYears || "0", 10) || 0;
+        const months = parseInt(formData.experienceMonths || "0", 10) || 0;
+        if (years < 0) nextErrors.experienceYears = "Ingresa años válidos.";
+        if (months < 0) nextErrors.experienceMonths = "Ingresa meses válidos.";
+        if (years === 0 && months === 0) {
+          nextErrors.experienceYears = "Indica el tiempo de experiencia (años o meses).";
+        }
+      }
 
       if (
         formData.employmentStatus === "EMPLEADO" &&
@@ -633,9 +698,12 @@ function App() {
       }
 
       if (!formData.dataPolicyAccepted) {
-        nextErrors.dataPolicyAccepted =
-          "Debes autorizar el tratamiento de datos personales para continuar.";
-      }
+                nextErrors.dataPolicyAccepted =
+                  "Debes autorizar el tratamiento de datos personales para continuar.";
+              } else if (!policyVisited) {
+                nextErrors.dataPolicyAccepted =
+                  "Debes abrir y leer la política de tratamiento de datos antes de aceptarla.";
+              }
     }
 
     if (stepIndex === 4) {
@@ -684,8 +752,17 @@ function App() {
       return;
     }
 
+    const payload = { ...formData };
+    if (formData.experienceMode === "YEARS_MONTHS") {
+      const years = Number(formData.experienceYears) || 0;
+      const months = Number(formData.experienceMonths) || 0;
+      const totalMonths = years * 12 + months;
+      payload.experienceValue = String(totalMonths);
+      payload.experienceUnit = "MESES";
+    }
+
     setSubmittedRecord({
-      ...formData,
+      ...payload,
       signatureDataUrl,
       submittedAt: new Date().toISOString(),
     });
@@ -870,9 +947,24 @@ function App() {
                   "step-list__item",
                   index === currentStep ? "is-active" : "",
                   index < currentStep ? "is-complete" : "",
+                  index <= currentStep ? "is-clickable" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
+                onClick={() => {
+                  if (index <= currentStep) {
+                    setCurrentStep(index);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if ((e.key === "Enter" || e.key === " ") && index <= currentStep) {
+                    setCurrentStep(index);
+                  }
+                }}
+                tabIndex={index <= currentStep ? 0 : -1}
+                role="button"
+                aria-disabled={index > currentStep}
               >
                 <span className="step-list__number">{index + 1}</span>
                 <div>
@@ -1313,37 +1405,80 @@ function App() {
               </div>
 
               <div className="form-grid form-grid--two">
-                <Field
-                  label="Tiempo de experiencia"
-                  error={errors.experienceValue}
-                  hint="Relacionada con la competencia que deseas certificar."
-                  required
-                >
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.experienceValue}
-                    onChange={(event) =>
-                      updateField("experienceValue", event.target.value)
-                    }
-                    placeholder="Ej. 12"
-                  />
+                <Field label="Formato de experiencia" hint="Puedes ingresar años y meses o meses totales.">
+                  <div className="choice-grid choice-grid--small">
+                    <label className={`choice-card ${formData.experienceMode === 'TOTAL_MONTHS' ? 'is-selected' : ''}`}>
+                      <input type="radio" name="experienceMode" value="TOTAL_MONTHS" checked={formData.experienceMode === 'TOTAL_MONTHS'} onChange={(e) => updateField('experienceMode', e.target.value)} style={{ display: 'none' }} />
+                      Meses totales
+                    </label>
+                    <label className={`choice-card ${formData.experienceMode === 'YEARS_MONTHS' ? 'is-selected' : ''}`}>
+                      <input type="radio" name="experienceMode" value="YEARS_MONTHS" checked={formData.experienceMode === 'YEARS_MONTHS'} onChange={(e) => updateField('experienceMode', e.target.value)} style={{ display: 'none' }} />
+                      Años y meses
+                    </label>
+                  </div>
                 </Field>
 
-                <Field label="Unidad" error={errors.experienceUnit} required>
-                  <select
-                    value={formData.experienceUnit}
-                    onChange={(event) =>
-                      updateField("experienceUnit", event.target.value)
-                    }
-                  >
-                    {EXPERIENCE_UNITS.map((unit) => (
-                      <option key={unit} value={unit}>
-                        {unit}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
+                {formData.experienceMode === 'TOTAL_MONTHS' ? (
+                  <>
+                    <Field
+                      label="Tiempo de experiencia"
+                      error={errors.experienceValue}
+                      hint="Relacionada con la competencia que deseas certificar."
+                      required
+                    >
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.experienceValue}
+                        onChange={(event) =>
+                          updateField("experienceValue", event.target.value)
+                        }
+                        placeholder="Ej. 12"
+                      />
+                    </Field>
+
+                    <Field label="Unidad" error={errors.experienceUnit} required>
+                      <select
+                        value={formData.experienceUnit}
+                        onChange={(event) =>
+                          updateField("experienceUnit", event.target.value)
+                        }
+                      >
+                        {EXPERIENCE_UNITS.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {unit}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </>
+                ) : (
+                  <>
+                    <Field label="Años" error={errors.experienceYears} required>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.experienceYears}
+                        onChange={(event) =>
+                          updateField("experienceYears", event.target.value)
+                        }
+                        placeholder="Ej. 2"
+                      />
+                    </Field>
+
+                    <Field label="Meses" error={errors.experienceMonths} required>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.experienceMonths}
+                        onChange={(event) =>
+                          updateField("experienceMonths", event.target.value)
+                        }
+                        placeholder="Ej. 6"
+                      />
+                    </Field>
+                  </>
+                )}
               </div>
 
               <div className="choice-block">
@@ -1458,10 +1593,29 @@ function App() {
               <article className="info-card">
                 <h3>¿Qué debes preparar para este tipo de solicitud?</h3>
                 <ul className="check-list">
-                  {activeRequirements.map((requirement) => (
-                    <li key={requirement}>{requirement}</li>
+                  {activeRequirements.map((requirement, idx) => (
+                    <li key={`${requirement}-${idx}`}>{idx + 1}. {requirement}</li>
                   ))}
                 </ul>
+
+                {formData.requestType === "CERTIFICACIÓN" ? (
+                  <div style={{ marginTop: 12 }}>
+                    <strong>Tipo de certificado de estudio</strong>
+                    <div className="choice-grid choice-grid--small" style={{ marginTop: 8 }}>
+                      <label className={`choice-card ${formData.certificationStudyType === 'GENERAL' ? 'is-selected' : ''}`}>
+                        <input type="radio" name="certificationStudyType" value="GENERAL" checked={formData.certificationStudyType === 'GENERAL'} onChange={(e) => updateField('certificationStudyType', e.target.value)} style={{ display: 'none' }} />
+                        Certificado de estudio general
+                      </label>
+                      <label className={`choice-card ${formData.certificationStudyType === 'RELACIONADO' ? 'is-selected' : ''}`}>
+                        <input type="radio" name="certificationStudyType" value="RELACIONADO" checked={formData.certificationStudyType === 'RELACIONADO'} onChange={(e) => updateField('certificationStudyType', e.target.value)} style={{ display: 'none' }} />
+                        Certificado propio relacionado con el esquema
+                      </label>
+                    </div>
+                    {errors.certificationStudyType ? (
+                      <p className="section-error">{errors.certificationStudyType}</p>
+                    ) : null}
+                  </div>
+                ) : null}
               </article>
             </section>
           ) : null}
@@ -1631,13 +1785,19 @@ function App() {
                       Firma con mouse, lápiz digital o toque sobre la pantalla.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    className="button button--ghost"
-                    onClick={clearSignature}
-                  >
-                    Limpiar firma
-                  </button>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <label className="button button--ghost" style={{ position: 'relative', overflow: 'hidden' }}>
+                      Adjuntar firma
+                      <input type="file" accept="image/*" onChange={handleSignatureUpload} style={{ position: 'absolute', left: 0, top: 0, opacity: 0, width: '100%', height: '100%' }} />
+                    </label>
+                    <button
+                      type="button"
+                      className="button button--ghost"
+                      onClick={clearSignature}
+                    >
+                      Limpiar firma
+                    </button>
+                  </div>
                 </div>
 
                 <div className="signature-box">
@@ -1709,3 +1869,4 @@ function App() {
 }
 
 export default App;
+

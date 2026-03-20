@@ -303,8 +303,12 @@
 }
 
 .step-list__item.is-active {
-  border-color: var(--accent-border);
-  background: var(--accent-bg);
+  border-color: #ff7a00;
+  background: linear-gradient(90deg, rgba(255,122,0,0.06), rgba(255,122,0,0.02));
+  box-shadow: 0 8px 20px rgba(255,122,0,0.06);
+}
+.step-list__item.is-clickable {
+  cursor: pointer;
 }
 
 .step-list__item.is-complete .step-list__number {
@@ -428,10 +432,15 @@ textarea {
   font: inherit;
   color: var(--text-h);
   background: var(--surface);
+  text-transform: uppercase;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     background-color 0.2s ease;
+}
+
+input[type="email"] {
+  text-transform: none;
 }
 
 input::placeholder,
@@ -492,9 +501,10 @@ textarea {
 }
 
 .choice-card.is-selected {
-  background: var(--accent-bg);
-  border-color: var(--accent-border);
-  box-shadow: 0 10px 24px rgba(66, 139, 202, 0.16);
+  background: linear-gradient(135deg, #ff7a00, #ff8a3d);
+  border-color: #ff7a00;
+  color: var(--surface);
+  box-shadow: 0 10px 24px rgba(255,122,0,0.12);
 }
 
 .choice-block {
