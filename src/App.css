@@ -103,6 +103,7 @@
 .hero-illustration__seal {
   position: relative;
   background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(66, 139, 202, 0.18);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.1);
@@ -303,9 +304,16 @@
 }
 
 .step-list__item.is-active {
-  border-color: #ff7a00;
-  background: linear-gradient(90deg, rgba(255,122,0,0.06), rgba(255,122,0,0.02));
-  box-shadow: 0 8px 20px rgba(255,122,0,0.06);
+  border-color: #f7941d;
+  background: linear-gradient(90deg, rgba(247,148,29,0.1), rgba(247,148,29,0.04));
+  box-shadow: 0 8px 24px rgba(247,148,29,0.1);
+}
+
+.step-list__item.is-clickable:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+  transform: translateX(4px);
+  transition: all 0.2s ease;
 }
 .step-list__item.is-clickable {
   cursor: pointer;
@@ -391,9 +399,10 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.field {
+.field__header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
   gap: 8px;
 }
 
@@ -401,6 +410,14 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--text-h);
+}
+
+.field__counter {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0.7;
+  text-transform: none;
 }
 
 .required-mark {
@@ -475,7 +492,11 @@ textarea {
 }
 
 .choice-grid--small {
-  grid-template-columns: repeat(2, minmax(120px, 180px));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.choice-grid--long {
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
 }
 
 .choice-card {
@@ -501,10 +522,19 @@ textarea {
 }
 
 .choice-card.is-selected {
-  background: linear-gradient(135deg, #ff7a00, #ff8a3d);
-  border-color: #ff7a00;
+  background: linear-gradient(135deg, #f7941d, #ffb85f);
+  border-color: #f7941d;
   color: var(--surface);
-  box-shadow: 0 10px 24px rgba(255,122,0,0.12);
+  box-shadow: 0 10px 24px rgba(247,148,29,0.2);
+  border-width: 2px;
+}
+
+.choice-card.is-selected-green {
+  background: linear-gradient(135deg, #28a745, #5dd37a);
+  border-color: #28a745;
+  color: var(--surface);
+  box-shadow: 0 10px 24px rgba(40,167,69,0.2);
+  border-width: 2px;
 }
 
 .choice-block {
