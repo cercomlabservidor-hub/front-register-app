@@ -24,6 +24,8 @@ const EVALUATION_MODALITIES = ["EVALUACIÓN PRESENCIAL", "EVALUACIÓN REMOTA"];
 const EXPERIENCE_UNITS = ["MESES", "AÑOS"];
 const FORM_ROUTE = "#/";
 const DATA_POLICY_ROUTE = "#/politica-tratamiento-datos";
+const ASPECTS_ROUTE = "#/aspectos-a-tener-en-cuenta";
+const CONDITIONS_ROUTE = "#/declaracion-y-aceptacion-condiciones";
 
 const CERTIFICATION_SCHEMES = [
   "Agente de tránsito y Seguridad Vial (Caracterizar) - NSCL 280601088",
@@ -49,7 +51,7 @@ const REQUIREMENTS_BY_REQUEST = {
     "Adjuntar copia legible del documento de identidad.",
     "Completar la solicitud en su versión vigente.",
     "Presentar cartas laborales relacionadas con el esquema, con mínimo seis meses de experiencia.",
-    "Presentar certificaciones de estudio según el esquema.",
+    "Certificado de estudio general o propio con relación al esquema.",
     "Tener foto digital en fondo blanco cuando aplique.",
     "Adjuntar otros certificados según el esquema de certificación.",
     "Presentar comprobante de pago según la oferta aceptada.",
@@ -224,15 +226,24 @@ const createInitialForm = () => ({
     accumulator[declaration.key] = false;
     return accumulator;
   }, {}),
+  aspectsAcknowledged: false,
+  declarationAcknowledged: false,
 });
 
-function Field({ label, error, hint, required = false, children }) {
+function Field({ label, error, hint, required = false, maxLength, currentLength, children }) {
   return (
     <label className="field">
-      <span className="field__label">
-        {label}
-        {required ? <span className="required-mark">*</span> : null}
-      </span>
+      <div className="field__header">
+        <span className="field__label">
+          {label}
+          {required ? <span className="required-mark">*</span> : null}
+        </span>
+        {maxLength ? (
+          <span className="field__counter">
+            {currentLength || 0} / {maxLength}
+          </span>
+        ) : null}
+      </div>
       {children}
       {hint ? <span className="field__hint">{hint}</span> : null}
       {error ? <span className="field__error">{error}</span> : null}
@@ -240,34 +251,41 @@ function Field({ label, error, hint, required = false, children }) {
   );
 }
 
-function DataPolicyPage() {
-  useEffect(() => {
-    try {
-      sessionStorage.setItem('policySeen','1');
-      window.dispatchEvent(new Event('policyVisited'));
-    } catch (e) {}
-  }, []);
-
+function InfoPage({ title, pill, description, backRoute, children }) {
   return (
     <main className="app-shell">
       <section className="policy-hero">
-        <span className="pill">CERCOMLAB · Política de datos</span>
-        <h1>
-          Política de tratamiento de datos personales de{" "}
-          <span className="hero-card__highlight">CERCOMLAB</span>
-        </h1>
-        <p>
-          Este documento informa al titular cómo pueden ser recolectados,
-          usados, almacenados y protegidos sus datos personales dentro del
-          proceso de evaluación y certificación.
-        </p>
+        <span className="pill">{pill}</span>
+        <h1>{title}</h1>
+        <p>{description}</p>
         <div className="actions-row actions-row--start">
-          <a href={FORM_ROUTE} className="button button--ghost">
+          <a href={backRoute} className="button button--ghost">
             Volver al registro
           </a>
         </div>
       </section>
+      <section className="policy-sections">
+        {children}
+      </section>
+    </main>
+  );
+}
 
+function DataPolicyPage() {
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('policySeen', '1');
+      window.dispatchEvent(new Event('policyVisited'));
+    } catch (e) { }
+  }, []);
+
+  return (
+    <InfoPage
+      title={<>Política de tratamiento de datos personales de <span className="hero-card__highlight">CERCOMLAB</span></>}
+      pill="CERCOMLAB · Política de datos"
+      description="Este documento informa al titular cómo pueden ser recolectados, usados, almacenados y protegidos sus datos personales dentro del proceso de evaluación y certificación."
+      backRoute={FORM_ROUTE}
+    >
       <section className="policy-grid">
         <article className="policy-card">
           <h2>Resumen de la política</h2>
@@ -299,43 +317,74 @@ function DataPolicyPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
-          <p className="muted">
-            Autoridad principal de vigilancia y control: Superintendencia de
-            Industria y Comercio (SIC).
-          </p>
         </article>
       </section>
 
-      <section className="policy-sections">
-        {DATA_POLICY_SECTIONS.map((section) => (
-          <article key={section.title} className="policy-card">
-            <h2>{section.title}</h2>
-            <ul className="check-list">
-              {section.content.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </article>
-        ))}
-      </section>
+      {DATA_POLICY_SECTIONS.map((section) => (
+        <article key={section.title} className="policy-card">
+          <h2>{section.title}</h2>
+          <ul className="check-list">
+            {section.content.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </article>
+      ))}
+    </InfoPage>
+  );
+}
 
-      <section className="policy-card">
-        <h2>Consultas, reclamos y ejercicio de derechos</h2>
-        <p>
-          El titular podrá ejercer sus derechos de conocimiento, acceso,
-          actualización, rectificación, supresión y revocatoria de autorización
-          mediante solicitud enviada a los canales de contacto informados por
-          CERCOMLAB S.A.S. La atención de consultas y reclamos se tramitará bajo
-          los términos y condiciones previstos en la Ley 1581 de 2012 y su
-          reglamentación.
-        </p>
-        <p className="muted">
-          Esta política es un contenido funcional para el formulario web y debe
-          ser revisada y complementada por el área jurídica o de cumplimiento de
-          CERCOMLAB antes de su publicación definitiva.
-        </p>
-      </section>
-    </main>
+function AspectsPage() {
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('aspectsSeen', '1');
+      window.dispatchEvent(new Event('aspectsVisited'));
+    } catch (e) { }
+  }, []);
+
+  return (
+    <InfoPage
+      title="Aspectos a tener en cuenta"
+      pill="CERCOMLAB · Información importante"
+      description="Revisa cuidadosamente los siguientes puntos antes de proceder con tu solicitud."
+      backRoute={FORM_ROUTE}
+    >
+      <article className="policy-card">
+        <h2>Recomendaciones generales</h2>
+        <ul className="check-list">
+          <li>Asegúrate de que toda la información ingresada sea veraz y actual.</li>
+          <li>Los documentos adjuntos deben ser legibles y estar en formato PDF o imagen.</li>
+          <li>La experiencia laboral debe ser demostrable mediante certificaciones.</li>
+          <li>El cumplimiento de los requisitos mínimos es obligatorio para la certificación.</li>
+        </ul>
+      </article>
+    </InfoPage>
+  );
+}
+
+function ConditionsPage() {
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('conditionsSeen', '1');
+      window.dispatchEvent(new Event('conditionsVisited'));
+    } catch (e) { }
+  }, []);
+
+  return (
+    <InfoPage
+      title="Declaración del solicitante y aceptación de condiciones"
+      pill="CERCOMLAB · Términos y condiciones"
+      description="Al completar este proceso, aceptas los siguientes compromisos y declaraciones."
+      backRoute={FORM_ROUTE}
+    >
+      <article className="policy-card">
+        <h2>Términos del servicio</h2>
+        <p>El proceso de evaluación y certificación se rige por las normas vigentes de CERCOMLAB y la normativa nacional colombiana.</p>
+        <ul className="check-list">
+          {DECLARATIONS.map(d => <li key={d.key}>{d.label}</li>)}
+        </ul>
+      </article>
+    </InfoPage>
   );
 }
 
@@ -346,11 +395,15 @@ function App() {
   const [signatureDataUrl, setSignatureDataUrl] = useState("");
   const [submittedRecord, setSubmittedRecord] = useState(null);
   const [route, setRoute] = useState(() => window.location.hash || FORM_ROUTE);
-  const [policyVisited, setPolicyVisited] = useState(() => {
+  const [visited, setVisited] = useState(() => {
     try {
-      return sessionStorage.getItem('policySeen') === '1';
+      return {
+        policy: sessionStorage.getItem('policySeen') === '1',
+        aspects: sessionStorage.getItem('aspectsSeen') === '1',
+        conditions: sessionStorage.getItem('conditionsSeen') === '1',
+      };
     } catch (e) {
-      return false;
+      return { policy: false, aspects: false, conditions: false };
     }
   });
 
@@ -394,18 +447,30 @@ function App() {
   useEffect(() => {
     const syncRoute = () => {
       setRoute(window.location.hash || FORM_ROUTE);
-      setPolicyVisited(sessionStorage.getItem('policySeen') === '1');
+      try {
+        setVisited({
+          policy: sessionStorage.getItem('policySeen') === '1',
+          aspects: sessionStorage.getItem('aspectsSeen') === '1',
+          conditions: sessionStorage.getItem('conditionsSeen') === '1',
+        });
+      } catch (e) { }
     };
 
-    const onPolicyVisited = () => setPolicyVisited(true);
+    const onPolicyVisited = () => setVisited(v => ({ ...v, policy: true }));
+    const onAspectsVisited = () => setVisited(v => ({ ...v, aspects: true }));
+    const onConditionsVisited = () => setVisited(v => ({ ...v, conditions: true }));
 
     window.addEventListener("hashchange", syncRoute);
     window.addEventListener("policyVisited", onPolicyVisited);
+    window.addEventListener("aspectsVisited", onAspectsVisited);
+    window.addEventListener("conditionsVisited", onConditionsVisited);
     syncRoute();
 
     return () => {
       window.removeEventListener("hashchange", syncRoute);
       window.removeEventListener("policyVisited", onPolicyVisited);
+      window.removeEventListener("aspectsVisited", onAspectsVisited);
+      window.removeEventListener("conditionsVisited", onConditionsVisited);
     };
   }, []);
 
@@ -418,9 +483,10 @@ function App() {
   }, [currentStep, signatureDataUrl]);
 
   const updateField = (name, value) => {
-    // Normalize textual input to uppercase except for email fields
+    // Normalize textual input to uppercase except for email fields and selects that use mixed case
     let normalized = value;
-    if (typeof value === "string" && name !== "email") {
+    const skipUppercase = ["email", "selectedScheme"];
+    if (typeof value === "string" && !skipUppercase.includes(name)) {
       normalized = value.toUpperCase();
     }
 
@@ -680,6 +746,13 @@ function App() {
       ) {
         nextErrors.otherSchemeName = "Describe el esquema solicitado.";
       }
+
+      if (
+        formData.requestType === "CERTIFICACIÓN" &&
+        !formData.certificationStudyType.trim()
+      ) {
+        nextErrors.certificationStudyType = "Selecciona el tipo de certificado.";
+      }
     }
 
     if (stepIndex === 3) {
@@ -698,15 +771,27 @@ function App() {
       }
 
       if (!formData.dataPolicyAccepted) {
-                nextErrors.dataPolicyAccepted =
-                  "Debes autorizar el tratamiento de datos personales para continuar.";
-              } else if (!policyVisited) {
-                nextErrors.dataPolicyAccepted =
-                  "Debes abrir y leer la política de tratamiento de datos antes de aceptarla.";
-              }
+        nextErrors.dataPolicyAccepted =
+          "Debes autorizar el tratamiento de datos personales para continuar.";
+      } else if (!visited.policy) {
+        nextErrors.dataPolicyAccepted =
+          "Debes abrir y leer la política de tratamiento de datos antes de aceptarla.";
+      }
+
+      if (!formData.aspectsAcknowledged) {
+        nextErrors.aspectsAcknowledged = "Debes confirmar que leíste los aspectos a tener en cuenta.";
+      } else if (!visited.aspects) {
+        nextErrors.aspectsAcknowledged = "Debes abrir y leer los aspectos a tener en cuenta antes de aceptarlos.";
+      }
     }
 
     if (stepIndex === 4) {
+      if (!formData.declarationAcknowledged) {
+        nextErrors.declarationAcknowledged = "Debes confirmar que leíste la declaración del solicitante.";
+      } else if (!visited.conditions) {
+        nextErrors.declarationAcknowledged = "Debes abrir y leer la declaración del solicitante antes de aceptarla.";
+      }
+
       const declarationsAccepted = Object.values(formData.declarations).every(
         Boolean,
       );
@@ -790,9 +875,9 @@ function App() {
       ? formData.otherSchemeName
       : formData.selectedScheme;
 
-  if (isPolicyPage) {
-    return <DataPolicyPage />;
-  }
+  if (isPolicyPage) return <DataPolicyPage />;
+  if (route === ASPECTS_ROUTE) return <AspectsPage />;
+  if (route === CONDITIONS_ROUTE) return <ConditionsPage />;
 
   if (submittedRecord) {
     return (
@@ -1039,6 +1124,8 @@ function App() {
                   error={errors.fullName}
                   hint="Tal como aparece en tu documento de identidad."
                   required
+                  maxLength={100}
+                  currentLength={formData.fullName.length}
                 >
                   <input
                     type="text"
@@ -1046,6 +1133,7 @@ function App() {
                     onChange={(event) =>
                       updateField("fullName", event.target.value)
                     }
+                    maxLength={100}
                     placeholder="Ej. Ana María Pérez Gómez"
                   />
                 </Field>
@@ -1075,6 +1163,8 @@ function App() {
                   label="Número de documento"
                   error={errors.documentNumber}
                   required
+                  maxLength={20}
+                  currentLength={formData.documentNumber.length}
                 >
                   <input
                     type="text"
@@ -1082,6 +1172,7 @@ function App() {
                     onChange={(event) =>
                       updateField("documentNumber", event.target.value)
                     }
+                    maxLength={20}
                     placeholder="Ej. 1234567890"
                   />
                 </Field>
@@ -1090,6 +1181,8 @@ function App() {
                   label="¿Cuál?"
                   error={errors.otherDocumentType}
                   required={formData.documentType === "OTRO"}
+                  maxLength={50}
+                  currentLength={formData.otherDocumentType.length}
                 >
                   <input
                     type="text"
@@ -1097,6 +1190,7 @@ function App() {
                     onChange={(event) =>
                       updateField("otherDocumentType", event.target.value)
                     }
+                    maxLength={50}
                     placeholder="Especifica el tipo"
                     disabled={formData.documentType !== "OTRO"}
                   />
@@ -1122,6 +1216,8 @@ function App() {
                   label="Lugar de nacimiento"
                   error={errors.birthPlace}
                   required
+                  maxLength={100}
+                  currentLength={formData.birthPlace.length}
                 >
                   <input
                     type="text"
@@ -1129,6 +1225,7 @@ function App() {
                     onChange={(event) =>
                       updateField("birthPlace", event.target.value)
                     }
+                    maxLength={100}
                     placeholder="Ciudad / municipio"
                   />
                 </Field>
@@ -1153,6 +1250,8 @@ function App() {
                   label="Lugar de expedición"
                   error={errors.expeditionPlace}
                   required
+                  maxLength={100}
+                  currentLength={formData.expeditionPlace.length}
                 >
                   <input
                     type="text"
@@ -1160,6 +1259,7 @@ function App() {
                     onChange={(event) =>
                       updateField("expeditionPlace", event.target.value)
                     }
+                    maxLength={100}
                     placeholder="Ciudad / municipio"
                   />
                 </Field>
@@ -1169,6 +1269,8 @@ function App() {
                 label="Dirección de residencia"
                 error={errors.address}
                 required
+                maxLength={200}
+                currentLength={formData.address.length}
               >
                 <input
                   type="text"
@@ -1176,6 +1278,7 @@ function App() {
                   onChange={(event) =>
                     updateField("address", event.target.value)
                   }
+                  maxLength={200}
                   placeholder="Ej. Carrera 00 # 00 - 00"
                 />
               </Field>
@@ -1185,6 +1288,8 @@ function App() {
                   label="Lugar de residencia"
                   error={errors.residencePlace}
                   required
+                  maxLength={100}
+                  currentLength={formData.residencePlace.length}
                 >
                   <input
                     type="text"
@@ -1192,28 +1297,31 @@ function App() {
                     onChange={(event) =>
                       updateField("residencePlace", event.target.value)
                     }
+                    maxLength={100}
                     placeholder="Barrio, vereda o sector"
                   />
                 </Field>
 
-                <Field label="Departamento" error={errors.department} required>
+                <Field label="Departamento" error={errors.department} required maxLength={50} currentLength={formData.department.length}>
                   <input
                     type="text"
                     value={formData.department}
                     onChange={(event) =>
                       updateField("department", event.target.value)
                     }
+                    maxLength={50}
                     placeholder="Ej. Antioquia"
                   />
                 </Field>
 
-                <Field label="Ciudad" error={errors.city} required>
+                <Field label="Ciudad" error={errors.city} required maxLength={50} currentLength={formData.city.length}>
                   <input
                     type="text"
                     value={formData.city}
                     onChange={(event) =>
                       updateField("city", event.target.value)
                     }
+                    maxLength={50}
                     placeholder="Ej. Medellín"
                   />
                 </Field>
@@ -1236,48 +1344,52 @@ function App() {
                   </select>
                 </Field>
 
-                <Field label="RH" error={errors.rh} required>
+                <Field label="RH" error={errors.rh} required maxLength={3} currentLength={formData.rh.length}>
                   <input
                     type="text"
                     value={formData.rh}
                     onChange={(event) =>
                       updateField("rh", event.target.value.toUpperCase())
                     }
+                    maxLength={3}
                     placeholder="Ej. O+"
                   />
                 </Field>
 
-                <Field label="Teléfono fijo (opcional)">
+                <Field label="Teléfono fijo (opcional)" maxLength={10} currentLength={formData.phone.length}>
                   <input
                     type="text"
                     value={formData.phone}
                     onChange={(event) =>
                       updateField("phone", event.target.value)
                     }
+                    maxLength={10}
                     placeholder="Ej. 6040000000"
                   />
                 </Field>
               </div>
 
               <div className="form-grid form-grid--two">
-                <Field label="Celular" error={errors.cellphone} required>
+                <Field label="Celular" error={errors.cellphone} required maxLength={10} currentLength={formData.cellphone.length}>
                   <input
                     type="text"
                     value={formData.cellphone}
                     onChange={(event) =>
                       updateField("cellphone", event.target.value)
                     }
+                    maxLength={10}
                     placeholder="Ej. 3001234567"
                   />
                 </Field>
 
-                <Field label="Correo electrónico" error={errors.email} required>
+                <Field label="Correo electrónico" error={errors.email} required maxLength={100} currentLength={formData.email.length}>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(event) =>
                       updateField("email", event.target.value)
                     }
+                    maxLength={100}
                     placeholder="nombre@correo.com"
                   />
                 </Field>
@@ -1308,6 +1420,8 @@ function App() {
                   label="Título obtenido"
                   error={errors.degreeTitle}
                   required
+                  maxLength={100}
+                  currentLength={formData.degreeTitle.length}
                 >
                   <input
                     type="text"
@@ -1315,6 +1429,7 @@ function App() {
                     onChange={(event) =>
                       updateField("degreeTitle", event.target.value)
                     }
+                    maxLength={100}
                     placeholder="Ej. Técnico laboral"
                   />
                 </Field>
@@ -1323,6 +1438,8 @@ function App() {
                   label="Institución"
                   error={errors.institutionName}
                   required
+                  maxLength={100}
+                  currentLength={formData.institutionName.length}
                 >
                   <input
                     type="text"
@@ -1330,6 +1447,7 @@ function App() {
                     onChange={(event) =>
                       updateField("institutionName", event.target.value)
                     }
+                    maxLength={100}
                     placeholder="Nombre de la institución"
                   />
                 </Field>
@@ -1376,6 +1494,8 @@ function App() {
                   error={errors.companyName}
                   hint="Obligatorio si tu condición laboral actual es empleado."
                   required={formData.employmentStatus === "EMPLEADO"}
+                  maxLength={100}
+                  currentLength={formData.companyName.length}
                 >
                   <input
                     type="text"
@@ -1383,6 +1503,7 @@ function App() {
                     onChange={(event) =>
                       updateField("companyName", event.target.value)
                     }
+                    maxLength={100}
                     placeholder="Nombre de la empresa"
                     disabled={formData.employmentStatus !== "EMPLEADO"}
                   />
@@ -1392,6 +1513,8 @@ function App() {
                   label="Profesión, ocupación u oficio"
                   error={errors.profession}
                   required
+                  maxLength={100}
+                  currentLength={formData.profession.length}
                 >
                   <input
                     type="text"
@@ -1399,27 +1522,45 @@ function App() {
                     onChange={(event) =>
                       updateField("profession", event.target.value)
                     }
+                    maxLength={100}
                     placeholder="Ej. Operador montacargas"
                   />
                 </Field>
               </div>
 
               <div className="form-grid form-grid--two">
-                <Field label="Formato de experiencia" hint="Puedes ingresar años y meses o meses totales.">
-                  <div className="choice-grid choice-grid--small">
-                    <label className={`choice-card ${formData.experienceMode === 'TOTAL_MONTHS' ? 'is-selected' : ''}`}>
-                      <input type="radio" name="experienceMode" value="TOTAL_MONTHS" checked={formData.experienceMode === 'TOTAL_MONTHS'} onChange={(e) => updateField('experienceMode', e.target.value)} style={{ display: 'none' }} />
-                      Meses totales
-                    </label>
-                    <label className={`choice-card ${formData.experienceMode === 'YEARS_MONTHS' ? 'is-selected' : ''}`}>
-                      <input type="radio" name="experienceMode" value="YEARS_MONTHS" checked={formData.experienceMode === 'YEARS_MONTHS'} onChange={(e) => updateField('experienceMode', e.target.value)} style={{ display: 'none' }} />
-                      Años y meses
-                    </label>
-                  </div>
-                </Field>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <Field label="Formato de experiencia" hint="Puedes ingresar años y meses o meses totales.">
+                    <div className="choice-grid choice-grid--small">
+                      <label className={`choice-card ${formData.experienceMode === 'TOTAL_MONTHS' ? 'is-selected' : ''}`}>
+                        <input type="radio" name="experienceMode" value="TOTAL_MONTHS" checked={formData.experienceMode === 'TOTAL_MONTHS'} onChange={(e) => updateField('experienceMode', e.target.value)} style={{ display: 'none' }} />
+                        Años o meses
+                      </label>
+                      <label className={`choice-card ${formData.experienceMode === 'YEARS_MONTHS' ? 'is-selected' : ''}`}>
+                        <input type="radio" name="experienceMode" value="YEARS_MONTHS" checked={formData.experienceMode === 'YEARS_MONTHS'} onChange={(e) => updateField('experienceMode', e.target.value)} style={{ display: 'none' }} />
+                        Años y meses
+                      </label>
+                    </div>
+                  </Field>
+                </div>
 
                 {formData.experienceMode === 'TOTAL_MONTHS' ? (
                   <>
+                    <Field label="Unidad" error={errors.experienceUnit} required>
+                      <select
+                        value={formData.experienceUnit}
+                        onChange={(event) =>
+                          updateField("experienceUnit", event.target.value)
+                        }
+                      >
+                        {EXPERIENCE_UNITS.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {unit}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+
                     <Field
                       label="Tiempo de experiencia"
                       error={errors.experienceValue}
@@ -1435,21 +1576,6 @@ function App() {
                         }
                         placeholder="Ej. 12"
                       />
-                    </Field>
-
-                    <Field label="Unidad" error={errors.experienceUnit} required>
-                      <select
-                        value={formData.experienceUnit}
-                        onChange={(event) =>
-                          updateField("experienceUnit", event.target.value)
-                        }
-                      >
-                        {EXPERIENCE_UNITS.map((unit) => (
-                          <option key={unit} value={unit}>
-                            {unit}
-                          </option>
-                        ))}
-                      </select>
                     </Field>
                   </>
                 ) : (
@@ -1508,12 +1634,15 @@ function App() {
                 error={errors.specialNeedsDescription}
                 hint="Indícalo solo si marcaste “Sí”."
                 required={formData.hasSpecialNeeds === "SI"}
+                maxLength={500}
+                currentLength={formData.specialNeedsDescription.length}
               >
                 <textarea
                   value={formData.specialNeedsDescription}
                   onChange={(event) =>
                     updateField("specialNeedsDescription", event.target.value)
                   }
+                  maxLength={500}
                   placeholder="Describe la necesidad especial o el impedimento físico"
                   disabled={formData.hasSpecialNeeds !== "SI"}
                   rows="4"
@@ -1578,6 +1707,8 @@ function App() {
                 label="Otro esquema"
                 error={errors.otherSchemeName}
                 required={formData.selectedScheme === "OTRO ESQUEMA"}
+                maxLength={200}
+                currentLength={formData.otherSchemeName.length}
               >
                 <input
                   type="text"
@@ -1585,6 +1716,7 @@ function App() {
                   onChange={(event) =>
                     updateField("otherSchemeName", event.target.value)
                   }
+                  maxLength={200}
                   placeholder="Describe el esquema solicitado"
                   disabled={formData.selectedScheme !== "OTRO ESQUEMA"}
                 />
@@ -1598,10 +1730,14 @@ function App() {
                   ))}
                 </ul>
 
+                <br />
+
                 {formData.requestType === "CERTIFICACIÓN" ? (
                   <div style={{ marginTop: 12 }}>
-                    <strong>Tipo de certificado de estudio</strong>
-                    <div className="choice-grid choice-grid--small" style={{ marginTop: 8 }}>
+                    <strong>
+                      Tipo de certificado de estudio <span className="required-mark">*</span>
+                    </strong>
+                    <div className="choice-grid choice-grid--long" style={{ marginTop: 8 }}>
                       <label className={`choice-card ${formData.certificationStudyType === 'GENERAL' ? 'is-selected' : ''}`}>
                         <input type="radio" name="certificationStudyType" value="GENERAL" checked={formData.certificationStudyType === 'GENERAL'} onChange={(e) => updateField('certificationStudyType', e.target.value)} style={{ display: 'none' }} />
                         Certificado de estudio general
@@ -1655,12 +1791,12 @@ function App() {
               <article className="info-card">
                 <h3>Checklist de soportes</h3>
                 <ul className="check-list">
-                  <li>Copia del documento de identidad.</li>
-                  <li>Solicitud de registro diligenciada.</li>
-                  <li>Cartas laborales relacionadas con el esquema.</li>
-                  <li>Certificados de estudio o formación específica.</li>
-                  <li>Foto digital fondo blanco cuando aplique.</li>
-                  <li>Otros certificados o soportes según el esquema.</li>
+                  <li>1. Copia del documento de identidad.</li>
+                  <li>2. Solicitud de registro diligenciada.</li>
+                  <li>3. Cartas laborales relacionadas con el esquema.</li>
+                  <li>4. Certificados de estudio o formación específica.</li>
+                  <li>5. Foto digital fondo blanco cuando aplique.</li>
+                  <li>6. Otros certificados o soportes según el esquema.</li>
                 </ul>
               </article>
 
@@ -1712,6 +1848,7 @@ function App() {
                   <input
                     type="checkbox"
                     checked={formData.dataPolicyAccepted}
+                    disabled={!visited.policy}
                     onChange={(event) =>
                       updateField("dataPolicyAccepted", event.target.checked)
                     }
@@ -1719,23 +1856,48 @@ function App() {
                   <span>
                     Autorizo el tratamiento confidencial de mis datos personales
                     según la política de CERCOMLAB.{" "}
+                    {!visited.policy && <small>(Abre la política para habilitar)</small>}{" "}
                     <span className="required-mark">*</span>
                   </span>
                 </label>
                 {errors.dataPolicyAccepted ? (
                   <p className="section-error">{errors.dataPolicyAccepted}</p>
                 ) : null}
+
+                <label className="checkbox-card">
+                  <input
+                    type="checkbox"
+                    checked={formData.aspectsAcknowledged}
+                    disabled={!visited.aspects}
+                    onChange={(event) =>
+                      updateField("aspectsAcknowledged", event.target.checked)
+                    }
+                  />
+                  <span>
+                    He leído y acepto los aspectos a tener en cuenta.{" "}
+                    {!visited.aspects && <small>(Abre los aspectos para habilitar)</small>}{" "}
+                    <span className="required-mark">*</span>
+                  </span>
+                </label>
+                {errors.aspectsAcknowledged ? (
+                  <p className="section-error">{errors.aspectsAcknowledged}</p>
+                ) : null}
               </div>
 
               <article className="policy-link-card">
-                <strong>Consulta la política de tratamiento de datos</strong>
+                <strong>Información necesaria</strong>
                 <p>
-                  Antes de autorizar el tratamiento de tus datos personales,
-                  puedes leer la política completa de CERCOMLAB.
+                  Antes de continuar, es obligatorio que leas los aspectos a
+                  tener en cuenta y la política de tratamiento de datos.
                 </p>
-                <a href={DATA_POLICY_ROUTE} className="policy-link">
-                  Abrir política de tratamiento de datos
-                </a>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+                  <a href={ASPECTS_ROUTE} rel="noopener noreferrer" className="policy-link">
+                    Abrir Aspectos a tener en cuenta
+                  </a>
+                  <a href={DATA_POLICY_ROUTE} rel="noopener noreferrer" className="policy-link">
+                    Abrir Política de tratamiento de datos
+                  </a>
+                </div>
               </article>
             </section>
           ) : null}
@@ -1754,17 +1916,46 @@ function App() {
               </header>
 
               <div className="checkbox-stack">
+                <label className="checkbox-card">
+                  <input
+                    type="checkbox"
+                    checked={formData.declarationAcknowledged}
+                    disabled={!visited.conditions}
+                    onChange={(event) =>
+                      updateField("declarationAcknowledged", event.target.checked)
+                    }
+                  />
+                  <span>
+                    He leído y acepto la declaración del solicitante y aceptación de condiciones.{" "}
+                    {!visited.conditions && <small>(Abre la declaración para habilitar)</small>}{" "}
+                    <span className="required-mark">*</span>
+                  </span>
+                </label>
+                {errors.declarationAcknowledged ? (
+                  <p className="section-error">{errors.declarationAcknowledged}</p>
+                ) : null}
+
+                <article className="policy-link-card" style={{ marginBottom: 16 }}>
+                  <strong>Lectura obligatoria</strong>
+                  <p>Es necesario que abras y leas la declaración antes de marcar la aceptación.</p>
+                  <a href={CONDITIONS_ROUTE} className="policy-link">
+                    Abrir declaración del solicitante
+                  </a>
+                </article>
+
                 {DECLARATIONS.map((declaration) => (
                   <label key={declaration.key} className="checkbox-card">
                     <input
                       type="checkbox"
                       checked={formData.declarations[declaration.key]}
+                      disabled={!visited.conditions}
                       onChange={(event) =>
                         updateDeclaration(declaration.key, event.target.checked)
                       }
                     />
                     <span>
                       {declaration.label}{" "}
+                      {!visited.conditions && <small>(Abre la declaración para habilitar)</small>}{" "}
                       <span className="required-mark">*</span>
                     </span>
                   </label>
@@ -1795,7 +1986,7 @@ function App() {
                       className="button button--ghost"
                       onClick={clearSignature}
                     >
-                      Limpiar firma
+                      Limpiar
                     </button>
                   </div>
                 </div>
