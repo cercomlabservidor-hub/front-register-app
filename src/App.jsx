@@ -352,10 +352,12 @@ function AspectsPage() {
       <article className="policy-card">
         <h2>Recomendaciones generales</h2>
         <ul className="check-list">
-          <li>Asegúrate de que toda la información ingresada sea veraz y actual.</li>
-          <li>Los documentos adjuntos deben ser legibles y estar en formato PDF o imagen.</li>
-          <li>La experiencia laboral debe ser demostrable mediante certificaciones.</li>
-          <li>El cumplimiento de los requisitos mínimos es obligatorio para la certificación.</li>
+          <li>1. Asegúrate de presentarse al proceso de certificación con suficiente disponibilidad de tiempo, de manera que este aspecto no afecte las condiciones para presentar a las pruebas.</li>
+          <li>2. El proceso de certificación cuenta con un examen teórico y una prueba práctica, cada uno tiene un puntaje de aprobación (Conocimientos 70% - desempeño 80 %).</li>
+          <li>3. Se debe desarrollar y superar todo el proceso de evaluación y certificación para poder obtener el certificado.</li>
+          <li>4. Si usa lentes, audífonos o prótesis de algún tipo, debe usarlas durante el desarrollo de las pruebas.</li>
+          <li>5. Se encuentra prohibido el uso de celulares, tabletas, cámaras u otros objetos durante el proceso de certificación presencial.</li>
+          <li>6. El candidato deberá llevar y utilizar sus propios elementos de protección personal requeridos según el esquema de certificación.</li>
         </ul>
       </article>
     </InfoPage>
