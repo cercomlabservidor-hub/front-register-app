@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
+import { startInteractiveGuide } from "./utils/guide";
 
 const STEP_TITLES = [
   "Datos personales",
@@ -230,7 +231,15 @@ const createInitialForm = () => ({
   declarationAcknowledged: false,
 });
 
-function Field({ label, error, hint, required = false, maxLength, currentLength, children }) {
+function Field({
+  label,
+  error,
+  hint,
+  required = false,
+  maxLength,
+  currentLength,
+  children,
+}) {
   return (
     <label className="field">
       <div className="field__header">
@@ -264,24 +273,28 @@ function InfoPage({ title, pill, description, backRoute, children }) {
           </a>
         </div>
       </section>
-      <section className="policy-sections">
-        {children}
-      </section>
+      <section className="policy-sections">{children}</section>
     </main>
   );
 }
 
 function DataPolicyPage() {
   useEffect(() => {
+    window.scrollTo(0, 0);
     try {
-      sessionStorage.setItem('policySeen', '1');
-      window.dispatchEvent(new Event('policyVisited'));
-    } catch (e) { }
+      sessionStorage.setItem("policySeen", "1");
+      window.dispatchEvent(new Event("policyVisited"));
+    } catch (e) {}
   }, []);
 
   return (
     <InfoPage
-      title={<>Política de tratamiento de datos personales de <span className="hero-card__highlight">CERCOMLAB</span></>}
+      title={
+        <>
+          Política de tratamiento de datos personales de{" "}
+          <span className="hero-card__highlight">CERCOMLAB</span>
+        </>
+      }
       pill="CERCOMLAB · Política de datos"
       description="Este documento informa al titular cómo pueden ser recolectados, usados, almacenados y protegidos sus datos personales dentro del proceso de evaluación y certificación."
       backRoute={FORM_ROUTE}
@@ -336,10 +349,11 @@ function DataPolicyPage() {
 
 function AspectsPage() {
   useEffect(() => {
+    window.scrollTo(0, 0);
     try {
-      sessionStorage.setItem('aspectsSeen', '1');
-      window.dispatchEvent(new Event('aspectsVisited'));
-    } catch (e) { }
+      sessionStorage.setItem("aspectsSeen", "1");
+      window.dispatchEvent(new Event("aspectsVisited"));
+    } catch (e) {}
   }, []);
 
   return (
@@ -352,12 +366,32 @@ function AspectsPage() {
       <article className="policy-card">
         <h2>Recomendaciones generales</h2>
         <ol className="check-list numbered-list">
-          <li>Asegúrate de presentarse al proceso de certificación con suficiente disponibilidad de tiempo, de manera que este aspecto no afecte las condiciones para presentar a las pruebas.</li>
-          <li>El proceso de certificación cuenta con un examen teórico y una prueba práctica, cada uno tiene un puntaje de aprobación (Conocimientos 70% - desempeño 80 %).</li>
-          <li>Se debe desarrollar y superar todo el proceso de evaluación y certificación para poder obtener el certificado.</li>
-          <li>Si usa lentes, audífonos o prótesis de algún tipo, debe usarlas durante el desarrollo de las pruebas.</li>
-          <li>Se encuentra prohibido el uso de celulares, tabletas, cámaras u otros objetos durante el proceso de certificación presencial.</li>
-          <li>El candidato deberá llevar y utilizar sus propios elementos de protección personal requeridos según el esquema de certificación.</li>
+          <li>
+            Asegúrate de presentarse al proceso de certificación con suficiente
+            disponibilidad de tiempo, de manera que este aspecto no afecte las
+            condiciones para presentar a las pruebas.
+          </li>
+          <li>
+            El proceso de certificación cuenta con un examen teórico y una
+            prueba práctica, cada uno tiene un puntaje de aprobación
+            (Conocimientos 70% - desempeño 80 %).
+          </li>
+          <li>
+            Se debe desarrollar y superar todo el proceso de evaluación y
+            certificación para poder obtener el certificado.
+          </li>
+          <li>
+            Si usa lentes, audífonos o prótesis de algún tipo, debe usarlas
+            durante el desarrollo de las pruebas.
+          </li>
+          <li>
+            Se encuentra prohibido el uso de celulares, tabletas, cámaras u
+            otros objetos durante el proceso de certificación presencial.
+          </li>
+          <li>
+            El candidato deberá llevar y utilizar sus propios elementos de
+            protección personal requeridos según el esquema de certificación.
+          </li>
         </ol>
       </article>
     </InfoPage>
@@ -366,10 +400,11 @@ function AspectsPage() {
 
 function ConditionsPage() {
   useEffect(() => {
+    window.scrollTo(0, 0);
     try {
-      sessionStorage.setItem('conditionsSeen', '1');
-      window.dispatchEvent(new Event('conditionsVisited'));
-    } catch (e) { }
+      sessionStorage.setItem("conditionsSeen", "1");
+      window.dispatchEvent(new Event("conditionsVisited"));
+    } catch (e) {}
   }, []);
 
   return (
@@ -381,9 +416,14 @@ function ConditionsPage() {
     >
       <article className="policy-card">
         <h2>Términos del servicio</h2>
-        <p>El proceso de evaluación y certificación se rige por las normas vigentes de CERCOMLAB y la normativa nacional colombiana.</p>
+        <p>
+          El proceso de evaluación y certificación se rige por las normas
+          vigentes de CERCOMLAB y la normativa nacional colombiana.
+        </p>
         <ul className="check-list">
-          {DECLARATIONS.map(d => <li key={d.key}>{d.label}</li>)}
+          {DECLARATIONS.map((d) => (
+            <li key={d.key}>{d.label}</li>
+          ))}
         </ul>
       </article>
     </InfoPage>
@@ -396,13 +436,14 @@ function App() {
   const [errors, setErrors] = useState({});
   const [signatureDataUrl, setSignatureDataUrl] = useState("");
   const [submittedRecord, setSubmittedRecord] = useState(null);
+  const [isFinalSaved, setIsFinalSaved] = useState(false);
   const [route, setRoute] = useState(() => window.location.hash || FORM_ROUTE);
   const [visited, setVisited] = useState(() => {
     try {
       return {
-        policy: sessionStorage.getItem('policySeen') === '1',
-        aspects: sessionStorage.getItem('aspectsSeen') === '1',
-        conditions: sessionStorage.getItem('conditionsSeen') === '1',
+        policy: sessionStorage.getItem("policySeen") === "1",
+        aspects: sessionStorage.getItem("aspectsSeen") === "1",
+        conditions: sessionStorage.getItem("conditionsSeen") === "1",
       };
     } catch (e) {
       return { policy: false, aspects: false, conditions: false };
@@ -448,24 +489,76 @@ function App() {
 
   useEffect(() => {
     const syncRoute = () => {
-      setRoute(window.location.hash || FORM_ROUTE);
+      const newRoute = window.location.hash || FORM_ROUTE;
+      const prevRoute = route;
+      setRoute(newRoute);
+
       try {
         setVisited({
-          policy: sessionStorage.getItem('policySeen') === '1',
-          aspects: sessionStorage.getItem('aspectsSeen') === '1',
-          conditions: sessionStorage.getItem('conditionsSeen') === '1',
+          policy: sessionStorage.getItem("policySeen") === "1",
+          aspects: sessionStorage.getItem("aspectsSeen") === "1",
+          conditions: sessionStorage.getItem("conditionsSeen") === "1",
         });
-      } catch (e) { }
+      } catch (e) {}
+
+      // Scroll to checklist or signature when returning from info pages
+      if (
+        newRoute === FORM_ROUTE &&
+        (prevRoute === DATA_POLICY_ROUTE ||
+          prevRoute === ASPECTS_ROUTE ||
+          prevRoute === CONDITIONS_ROUTE)
+      ) {
+        setTimeout(() => {
+          const targetId =
+            prevRoute === CONDITIONS_ROUTE
+              ? "signature-section"
+              : "checklist-section";
+          const element = document.getElementById(targetId);
+          if (element) {
+            const yOffset = -100; // Offset to see the title
+            const y =
+              element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: "smooth" });
+          }
+        }, 100);
+      }
     };
 
-    const onPolicyVisited = () => setVisited(v => ({ ...v, policy: true }));
-    const onAspectsVisited = () => setVisited(v => ({ ...v, aspects: true }));
-    const onConditionsVisited = () => setVisited(v => ({ ...v, conditions: true }));
+    const onPolicyVisited = () => setVisited((v) => ({ ...v, policy: true }));
+    const onAspectsVisited = () => setVisited((v) => ({ ...v, aspects: true }));
+    const onConditionsVisited = () =>
+      setVisited((v) => ({ ...v, conditions: true }));
 
     window.addEventListener("hashchange", syncRoute);
     window.addEventListener("policyVisited", onPolicyVisited);
     window.addEventListener("aspectsVisited", onAspectsVisited);
     window.addEventListener("conditionsVisited", onConditionsVisited);
+
+    const handleStartGuide = () => {
+      startInteractiveGuide(currentStep);
+    };
+    window.addEventListener("startGuide", handleStartGuide);
+
+    // Auto-start guide if it's the first time in this step
+    const hasSeenGuide = sessionStorage.getItem(
+      `guide_seen_step_${currentStep}`,
+    );
+    if (!hasSeenGuide) {
+      // Delay slightly to ensure DOM is ready and animations finished
+      const timer = setTimeout(() => {
+        startInteractiveGuide(currentStep);
+        sessionStorage.setItem(`guide_seen_step_${currentStep}`, "true");
+      }, 500);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener("hashchange", syncRoute);
+        window.removeEventListener("policyVisited", onPolicyVisited);
+        window.removeEventListener("aspectsVisited", onAspectsVisited);
+        window.removeEventListener("conditionsVisited", onConditionsVisited);
+        window.removeEventListener("startGuide", handleStartGuide);
+      };
+    }
+
     syncRoute();
 
     return () => {
@@ -473,8 +566,9 @@ function App() {
       window.removeEventListener("policyVisited", onPolicyVisited);
       window.removeEventListener("aspectsVisited", onAspectsVisited);
       window.removeEventListener("conditionsVisited", onConditionsVisited);
+      window.removeEventListener("startGuide", handleStartGuide);
     };
-  }, []);
+  }, [currentStep]);
 
   useEffect(() => {
     if (currentStep === STEP_TITLES.length - 1) {
@@ -713,7 +807,8 @@ function App() {
         if (years < 0) nextErrors.experienceYears = "Ingresa años válidos.";
         if (months < 0) nextErrors.experienceMonths = "Ingresa meses válidos.";
         if (years === 0 && months === 0) {
-          nextErrors.experienceYears = "Indica el tiempo de experiencia (años o meses).";
+          nextErrors.experienceYears =
+            "Indica el tiempo de experiencia (años o meses).";
         }
       }
 
@@ -753,7 +848,8 @@ function App() {
         formData.requestType === "CERTIFICACIÓN" &&
         !formData.certificationStudyType.trim()
       ) {
-        nextErrors.certificationStudyType = "Selecciona el tipo de certificado.";
+        nextErrors.certificationStudyType =
+          "Selecciona el tipo de certificado.";
       }
     }
 
@@ -781,17 +877,21 @@ function App() {
       }
 
       if (!formData.aspectsAcknowledged) {
-        nextErrors.aspectsAcknowledged = "Debes confirmar que leíste los aspectos a tener en cuenta.";
+        nextErrors.aspectsAcknowledged =
+          "Debes confirmar que leíste los aspectos a tener en cuenta.";
       } else if (!visited.aspects) {
-        nextErrors.aspectsAcknowledged = "Debes abrir y leer los aspectos a tener en cuenta antes de aceptarlos.";
+        nextErrors.aspectsAcknowledged =
+          "Debes abrir y leer los aspectos a tener en cuenta antes de aceptarlos.";
       }
     }
 
     if (stepIndex === 4) {
       if (!formData.declarationAcknowledged) {
-        nextErrors.declarationAcknowledged = "Debes confirmar que leíste la declaración del solicitante.";
+        nextErrors.declarationAcknowledged =
+          "Debes confirmar que leíste la declaración del solicitante.";
       } else if (!visited.conditions) {
-        nextErrors.declarationAcknowledged = "Debes abrir y leer la declaración del solicitante antes de aceptarla.";
+        nextErrors.declarationAcknowledged =
+          "Debes abrir y leer la declaración del solicitante antes de aceptarla.";
       }
 
       const declarationsAccepted = Object.values(formData.declarations).every(
@@ -855,12 +955,18 @@ function App() {
     });
   };
 
+  const handleFinalSave = () => {
+    setIsFinalSaved(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const resetForm = () => {
     setFormData(createInitialForm());
     setCurrentStep(0);
     setErrors({});
     setSignatureDataUrl("");
     setSubmittedRecord(null);
+    setIsFinalSaved(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -881,72 +987,212 @@ function App() {
   if (route === ASPECTS_ROUTE) return <AspectsPage />;
   if (route === CONDITIONS_ROUTE) return <ConditionsPage />;
 
-  if (submittedRecord) {
+  if (isFinalSaved) {
     return (
       <main className="app-shell">
-        <section className="confirmation-card">
-          <span className="pill pill--success">Registro completado</span>
-          <h1>La solicitud quedó lista para integrarse con tu backend.</h1>
-          <p>
-            Capturamos la información del solicitante, las declaraciones y la
-            firma digital en un flujo paso a paso.
-          </p>
-
-          <div className="confirmation-grid">
-            <article className="summary-card">
-              <h2>Resumen del solicitante</h2>
-              <dl className="summary-list">
-                <div>
-                  <dt>Nombre</dt>
-                  <dd>{submittedRecord.fullName}</dd>
-                </div>
-                <div>
-                  <dt>Documento</dt>
-                  <dd>
-                    {selectedDocumentLabel} - {submittedRecord.documentNumber}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Correo</dt>
-                  <dd>{submittedRecord.email}</dd>
-                </div>
-                <div>
-                  <dt>Solicitud</dt>
-                  <dd>{submittedRecord.requestType}</dd>
-                </div>
-                <div>
-                  <dt>Esquema</dt>
-                  <dd>{selectedSchemeLabel}</dd>
-                </div>
-                <div>
-                  <dt>Modalidad</dt>
-                  <dd>{submittedRecord.modality}</dd>
-                </div>
-              </dl>
-            </article>
-
-            <article className="summary-card">
-              <h2>Firma registrada</h2>
-              <div className="signature-preview">
-                <img
-                  src={submittedRecord.signatureDataUrl}
-                  alt="Firma del solicitante"
-                />
-              </div>
-              <p className="muted">
-                Puedes conectar este payload a la base de datos o API
-                corporativa cuando lo necesites.
-              </p>
-            </article>
+        <section className="confirmation-card confirmation-card--final">
+          <div className="success-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
           </div>
-
-          <div className="actions-row actions-row--start">
+          <span className="pill pill--success">Proceso completado</span>
+          <h1>¡Registro guardado con éxito!</h1>
+          <p>
+            Tu solicitud de evaluación y certificación ha sido procesada
+            correctamente. Pronto nos pondremos en contacto contigo para los
+            siguientes pasos.
+          </p>
+          <div className="actions-row actions-row--center">
             <button
               type="button"
               className="button button--primary"
               onClick={resetForm}
             >
-              Crear una nueva solicitud
+              Crear otro registro
+            </button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (submittedRecord) {
+    return (
+      <main className="app-shell">
+        <section className="summary-page">
+          <header className="summary-page__header">
+            <span className="pill">Resumen de registro</span>
+            <h1>Verifica tu información</h1>
+            <p>
+              Revisa que todos los datos sean correctos antes de finalizar el
+              proceso.
+            </p>
+          </header>
+
+          <div className="summary-grid-v2">
+            <article className="summary-card-v2">
+              <div className="summary-card-v2__header">
+                <div className="summary-card-v2__icon">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <h3>Datos Personales</h3>
+              </div>
+              <div className="summary-content-grid">
+                <div className="summary-item">
+                  <label>Nombre Completo</label>
+                  <span>{submittedRecord.fullName}</span>
+                </div>
+                <div className="summary-item">
+                  <label>Documento</label>
+                  <span>
+                    {selectedDocumentLabel} {submittedRecord.documentNumber}
+                  </span>
+                </div>
+                <div className="summary-item">
+                  <label>Correo Electrónico</label>
+                  <span>{submittedRecord.email}</span>
+                </div>
+                <div className="summary-item">
+                  <label>Celular</label>
+                  <span>{submittedRecord.cellphone}</span>
+                </div>
+              </div>
+            </article>
+
+            <article className="summary-card-v2">
+              <div className="summary-card-v2__header">
+                <div className="summary-card-v2__icon">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                  </svg>
+                </div>
+                <h3>Perfil Laboral</h3>
+              </div>
+              <div className="summary-content-grid">
+                <div className="summary-item">
+                  <label>Condición</label>
+                  <span>{submittedRecord.employmentStatus}</span>
+                </div>
+                <div className="summary-item">
+                  <label>Profesión</label>
+                  <span>{submittedRecord.profession}</span>
+                </div>
+                <div className="summary-item">
+                  <label>Experiencia</label>
+                  <span>
+                    {submittedRecord.experienceValue}{" "}
+                    {submittedRecord.experienceUnit}
+                  </span>
+                </div>
+              </div>
+            </article>
+
+            <article className="summary-card-v2">
+              <div className="summary-card-v2__header">
+                <div className="summary-card-v2__icon">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                </div>
+                <h3>Solicitud</h3>
+              </div>
+              <div className="summary-content-grid">
+                <div className="summary-item">
+                  <label>Tipo de Trámite</label>
+                  <span>{submittedRecord.requestType}</span>
+                </div>
+                <div className="summary-item">
+                  <label>Esquema</label>
+                  <span>{selectedSchemeLabel}</span>
+                </div>
+                <div className="summary-item">
+                  <label>Modalidad</label>
+                  <span>{submittedRecord.modality}</span>
+                </div>
+              </div>
+            </article>
+
+            <article className="summary-card-v2 summary-card-v2--signature">
+              <div className="summary-card-v2__header">
+                <div className="summary-card-v2__icon">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                </div>
+                <h3>Firma Digital</h3>
+              </div>
+              <div className="summary-signature-preview">
+                {submittedRecord.signatureDataUrl ? (
+                  <img
+                    src={submittedRecord.signatureDataUrl}
+                    alt="Firma del solicitante"
+                  />
+                ) : (
+                  <span className="muted">No se capturó firma</span>
+                )}
+              </div>
+            </article>
+          </div>
+
+          <div className="summary-actions">
+            <button
+              type="button"
+              className="button button--ghost"
+              onClick={() => setSubmittedRecord(null)}
+            >
+              Editar información
+            </button>
+            <button
+              type="button"
+              className="button button--primary button--lg"
+              onClick={handleFinalSave}
+            >
+              Guardar y finalizar proceso
             </button>
           </div>
         </section>
@@ -1009,7 +1255,7 @@ function App() {
         </div>
       </section>
 
-      <section className="progress-card">
+      <section className="progress-card" id="step-indicator">
         <div className="progress-card__header">
           <div>
             <span className="eyebrow">Progreso</span>
@@ -1017,7 +1263,40 @@ function App() {
               Paso {currentStep + 1}: {STEP_TITLES[currentStep]}
             </h2>
           </div>
-          <span className="progress-card__value">{Math.round(progress)}%</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <button
+              type="button"
+              id="start-guide"
+              className="button button--ghost button--small"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "4px 8px",
+                fontSize: "0.85rem",
+              }}
+              onClick={() => window.dispatchEvent(new Event("startGuide"))}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              Ver guía
+            </button>
+            <span className="progress-card__value">
+              {Math.round(progress)}%
+            </span>
+          </div>
         </div>
         <div className="progress-bar" aria-hidden="true">
           <span style={{ width: `${progress}%` }}></span>
@@ -1045,7 +1324,10 @@ function App() {
                   }
                 }}
                 onKeyDown={(e) => {
-                  if ((e.key === "Enter" || e.key === " ") && index <= currentStep) {
+                  if (
+                    (e.key === "Enter" || e.key === " ") &&
+                    index <= currentStep
+                  ) {
                     setCurrentStep(index);
                   }
                 }}
@@ -1095,7 +1377,7 @@ function App() {
 
         <form className="form-card" onSubmit={handleSubmit}>
           {currentStep === 0 ? (
-            <section className="section-stack">
+            <section className="section-stack" id="personal-data-section">
               <header className="section-header">
                 <div>
                   <span className="eyebrow">Paso 1</span>
@@ -1304,7 +1586,13 @@ function App() {
                   />
                 </Field>
 
-                <Field label="Departamento" error={errors.department} required maxLength={50} currentLength={formData.department.length}>
+                <Field
+                  label="Departamento"
+                  error={errors.department}
+                  required
+                  maxLength={50}
+                  currentLength={formData.department.length}
+                >
                   <input
                     type="text"
                     value={formData.department}
@@ -1316,7 +1604,13 @@ function App() {
                   />
                 </Field>
 
-                <Field label="Ciudad" error={errors.city} required maxLength={50} currentLength={formData.city.length}>
+                <Field
+                  label="Ciudad"
+                  error={errors.city}
+                  required
+                  maxLength={50}
+                  currentLength={formData.city.length}
+                >
                   <input
                     type="text"
                     value={formData.city}
@@ -1346,7 +1640,13 @@ function App() {
                   </select>
                 </Field>
 
-                <Field label="RH" error={errors.rh} required maxLength={3} currentLength={formData.rh.length}>
+                <Field
+                  label="RH"
+                  error={errors.rh}
+                  required
+                  maxLength={3}
+                  currentLength={formData.rh.length}
+                >
                   <input
                     type="text"
                     value={formData.rh}
@@ -1358,7 +1658,11 @@ function App() {
                   />
                 </Field>
 
-                <Field label="Teléfono fijo (opcional)" maxLength={10} currentLength={formData.phone.length}>
+                <Field
+                  label="Teléfono fijo (opcional)"
+                  maxLength={10}
+                  currentLength={formData.phone.length}
+                >
                   <input
                     type="text"
                     value={formData.phone}
@@ -1372,7 +1676,13 @@ function App() {
               </div>
 
               <div className="form-grid form-grid--two">
-                <Field label="Celular" error={errors.cellphone} required maxLength={10} currentLength={formData.cellphone.length}>
+                <Field
+                  label="Celular"
+                  error={errors.cellphone}
+                  required
+                  maxLength={10}
+                  currentLength={formData.cellphone.length}
+                >
                   <input
                     type="text"
                     value={formData.cellphone}
@@ -1384,7 +1694,13 @@ function App() {
                   />
                 </Field>
 
-                <Field label="Correo electrónico" error={errors.email} required maxLength={100} currentLength={formData.email.length}>
+                <Field
+                  label="Correo electrónico"
+                  error={errors.email}
+                  required
+                  maxLength={100}
+                  currentLength={formData.email.length}
+                >
                   <input
                     type="email"
                     value={formData.email}
@@ -1458,7 +1774,7 @@ function App() {
           ) : null}
 
           {currentStep === 1 ? (
-            <section className="section-stack">
+            <section className="section-stack" id="work-profile-section">
               <header className="section-header">
                 <div>
                   <span className="eyebrow">Paso 2</span>
@@ -1532,23 +1848,52 @@ function App() {
 
               <div className="form-grid form-grid--two">
                 <div style={{ gridColumn: "1 / -1" }}>
-                  <Field label="Formato de experiencia" hint="Puedes ingresar años y meses o meses totales.">
+                  <Field
+                    label="Formato de experiencia"
+                    hint="Puedes ingresar años y meses o meses totales."
+                  >
                     <div className="choice-grid choice-grid--small">
-                      <label className={`choice-card ${formData.experienceMode === 'TOTAL_MONTHS' ? 'is-selected' : ''}`}>
-                        <input type="radio" name="experienceMode" value="TOTAL_MONTHS" checked={formData.experienceMode === 'TOTAL_MONTHS'} onChange={(e) => updateField('experienceMode', e.target.value)} style={{ display: 'none' }} />
+                      <label
+                        className={`choice-card ${formData.experienceMode === "TOTAL_MONTHS" ? "is-selected" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="experienceMode"
+                          value="TOTAL_MONTHS"
+                          checked={formData.experienceMode === "TOTAL_MONTHS"}
+                          onChange={(e) =>
+                            updateField("experienceMode", e.target.value)
+                          }
+                          style={{ display: "none" }}
+                        />
                         Años o meses
                       </label>
-                      <label className={`choice-card ${formData.experienceMode === 'YEARS_MONTHS' ? 'is-selected' : ''}`}>
-                        <input type="radio" name="experienceMode" value="YEARS_MONTHS" checked={formData.experienceMode === 'YEARS_MONTHS'} onChange={(e) => updateField('experienceMode', e.target.value)} style={{ display: 'none' }} />
+                      <label
+                        className={`choice-card ${formData.experienceMode === "YEARS_MONTHS" ? "is-selected" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="experienceMode"
+                          value="YEARS_MONTHS"
+                          checked={formData.experienceMode === "YEARS_MONTHS"}
+                          onChange={(e) =>
+                            updateField("experienceMode", e.target.value)
+                          }
+                          style={{ display: "none" }}
+                        />
                         Años y meses
                       </label>
                     </div>
                   </Field>
                 </div>
 
-                {formData.experienceMode === 'TOTAL_MONTHS' ? (
+                {formData.experienceMode === "TOTAL_MONTHS" ? (
                   <>
-                    <Field label="Unidad" error={errors.experienceUnit} required>
+                    <Field
+                      label="Unidad"
+                      error={errors.experienceUnit}
+                      required
+                    >
                       <select
                         value={formData.experienceUnit}
                         onChange={(event) =>
@@ -1594,7 +1939,11 @@ function App() {
                       />
                     </Field>
 
-                    <Field label="Meses" error={errors.experienceMonths} required>
+                    <Field
+                      label="Meses"
+                      error={errors.experienceMonths}
+                      required
+                    >
                       <input
                         type="number"
                         min="0"
@@ -1654,7 +2003,7 @@ function App() {
           ) : null}
 
           {currentStep === 2 ? (
-            <section className="section-stack">
+            <section className="section-stack" id="scheme-section">
               <header className="section-header">
                 <div>
                   <span className="eyebrow">Paso 3</span>
@@ -1728,7 +2077,9 @@ function App() {
                 <h3>¿Qué debes preparar para este tipo de solicitud?</h3>
                 <ul className="check-list">
                   {activeRequirements.map((requirement, idx) => (
-                    <li key={`${requirement}-${idx}`}>{idx + 1}. {requirement}</li>
+                    <li key={`${requirement}-${idx}`}>
+                      {idx + 1}. {requirement}
+                    </li>
                   ))}
                 </ul>
 
@@ -1737,20 +2088,58 @@ function App() {
                 {formData.requestType === "CERTIFICACIÓN" ? (
                   <div style={{ marginTop: 12 }}>
                     <strong>
-                      Tipo de certificado de estudio <span className="required-mark">*</span>
+                      Tipo de certificado de estudio{" "}
+                      <span className="required-mark">*</span>
                     </strong>
-                    <div className="choice-grid choice-grid--long" style={{ marginTop: 8 }}>
-                      <label className={`choice-card ${formData.certificationStudyType === 'GENERAL' ? 'is-selected' : ''}`}>
-                        <input type="radio" name="certificationStudyType" value="GENERAL" checked={formData.certificationStudyType === 'GENERAL'} onChange={(e) => updateField('certificationStudyType', e.target.value)} style={{ display: 'none' }} />
+                    <div
+                      className="choice-grid choice-grid--long"
+                      style={{ marginTop: 8 }}
+                    >
+                      <label
+                        className={`choice-card ${formData.certificationStudyType === "GENERAL" ? "is-selected" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="certificationStudyType"
+                          value="GENERAL"
+                          checked={
+                            formData.certificationStudyType === "GENERAL"
+                          }
+                          onChange={(e) =>
+                            updateField(
+                              "certificationStudyType",
+                              e.target.value,
+                            )
+                          }
+                          style={{ display: "none" }}
+                        />
                         Certificado de estudio general
                       </label>
-                      <label className={`choice-card ${formData.certificationStudyType === 'RELACIONADO' ? 'is-selected' : ''}`}>
-                        <input type="radio" name="certificationStudyType" value="RELACIONADO" checked={formData.certificationStudyType === 'RELACIONADO'} onChange={(e) => updateField('certificationStudyType', e.target.value)} style={{ display: 'none' }} />
+                      <label
+                        className={`choice-card ${formData.certificationStudyType === "RELACIONADO" ? "is-selected" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="certificationStudyType"
+                          value="RELACIONADO"
+                          checked={
+                            formData.certificationStudyType === "RELACIONADO"
+                          }
+                          onChange={(e) =>
+                            updateField(
+                              "certificationStudyType",
+                              e.target.value,
+                            )
+                          }
+                          style={{ display: "none" }}
+                        />
                         Certificado propio relacionado con el esquema
                       </label>
                     </div>
                     {errors.certificationStudyType ? (
-                      <p className="section-error">{errors.certificationStudyType}</p>
+                      <p className="section-error">
+                        {errors.certificationStudyType}
+                      </p>
                     ) : null}
                   </div>
                 ) : null}
@@ -1759,7 +2148,7 @@ function App() {
           ) : null}
 
           {currentStep === 3 ? (
-            <section className="section-stack">
+            <section className="section-stack" id="modality-section">
               <header className="section-header">
                 <div>
                   <span className="eyebrow">Paso 4</span>
@@ -1802,7 +2191,7 @@ function App() {
                 </ul>
               </article>
 
-              <div className="checkbox-stack">
+              <div className="checkbox-stack" id="checklist-section">
                 <label className="checkbox-card">
                   <input
                     type="checkbox"
@@ -1858,7 +2247,9 @@ function App() {
                   <span>
                     Autorizo el tratamiento confidencial de mis datos personales
                     según la política de CERCOMLAB.{" "}
-                    {!visited.policy && <small>(Abre la política para habilitar)</small>}{" "}
+                    {!visited.policy && (
+                      <small>(Abre la política para habilitar)</small>
+                    )}{" "}
                     <span className="required-mark">*</span>
                   </span>
                 </label>
@@ -1877,7 +2268,9 @@ function App() {
                   />
                   <span>
                     He leído y acepto los aspectos a tener en cuenta.{" "}
-                    {!visited.aspects && <small>(Abre los aspectos para habilitar)</small>}{" "}
+                    {!visited.aspects && (
+                      <small>(Abre los aspectos para habilitar)</small>
+                    )}{" "}
                     <span className="required-mark">*</span>
                   </span>
                 </label>
@@ -1893,10 +2286,18 @@ function App() {
                   tener en cuenta y la política de tratamiento de datos.
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-                  <a href={ASPECTS_ROUTE} rel="noopener noreferrer" className="policy-link">
+                  <a
+                    href={ASPECTS_ROUTE}
+                    rel="noopener noreferrer"
+                    className="policy-link"
+                  >
                     Abrir Aspectos a tener en cuenta
                   </a>
-                  <a href={DATA_POLICY_ROUTE} rel="noopener noreferrer" className="policy-link">
+                  <a
+                    href={DATA_POLICY_ROUTE}
+                    rel="noopener noreferrer"
+                    className="policy-link"
+                  >
                     Abrir Política de tratamiento de datos
                   </a>
                 </div>
@@ -1905,7 +2306,7 @@ function App() {
           ) : null}
 
           {currentStep === 4 ? (
-            <section className="section-stack">
+            <section className="section-stack" id="signature-section">
               <header className="section-header">
                 <div>
                   <span className="eyebrow">Paso 5</span>
@@ -1924,22 +2325,36 @@ function App() {
                     checked={formData.declarationAcknowledged}
                     disabled={!visited.conditions}
                     onChange={(event) =>
-                      updateField("declarationAcknowledged", event.target.checked)
+                      updateField(
+                        "declarationAcknowledged",
+                        event.target.checked,
+                      )
                     }
                   />
                   <span>
-                    He leído y acepto la declaración del solicitante y aceptación de condiciones.{" "}
-                    {!visited.conditions && <small>(Abre la declaración para habilitar)</small>}{" "}
+                    He leído y acepto la declaración del solicitante y
+                    aceptación de condiciones.{" "}
+                    {!visited.conditions && (
+                      <small>(Abre la declaración para habilitar)</small>
+                    )}{" "}
                     <span className="required-mark">*</span>
                   </span>
                 </label>
                 {errors.declarationAcknowledged ? (
-                  <p className="section-error">{errors.declarationAcknowledged}</p>
+                  <p className="section-error">
+                    {errors.declarationAcknowledged}
+                  </p>
                 ) : null}
 
-                <article className="policy-link-card" style={{ marginBottom: 16 }}>
+                <article
+                  className="policy-link-card"
+                  style={{ marginBottom: 16 }}
+                >
                   <strong>Lectura obligatoria</strong>
-                  <p>Es necesario que abras y leas la declaración antes de marcar la aceptación.</p>
+                  <p>
+                    Es necesario que abras y leas la declaración antes de marcar
+                    la aceptación.
+                  </p>
                   <a href={CONDITIONS_ROUTE} className="policy-link">
                     Abrir declaración del solicitante
                   </a>
@@ -1957,7 +2372,9 @@ function App() {
                     />
                     <span>
                       {declaration.label}{" "}
-                      {!visited.conditions && <small>(Abre la declaración para habilitar)</small>}{" "}
+                      {!visited.conditions && (
+                        <small>(Abre la declaración para habilitar)</small>
+                      )}{" "}
                       <span className="required-mark">*</span>
                     </span>
                   </label>
@@ -1978,10 +2395,27 @@ function App() {
                       Firma con mouse, lápiz digital o toque sobre la pantalla.
                     </p>
                   </div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <label className="button button--ghost" style={{ position: 'relative', overflow: 'hidden' }}>
+                  <div
+                    style={{ display: "flex", gap: 8, alignItems: "center" }}
+                  >
+                    <label
+                      className="button button--ghost"
+                      style={{ position: "relative", overflow: "hidden" }}
+                    >
                       Adjuntar firma
-                      <input type="file" accept="image/*" onChange={handleSignatureUpload} style={{ position: 'absolute', left: 0, top: 0, opacity: 0, width: '100%', height: '100%' }} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleSignatureUpload}
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          top: 0,
+                          opacity: 0,
+                          width: "100%",
+                          height: "100%",
+                        }}
+                      />
                     </label>
                     <button
                       type="button"
@@ -2034,6 +2468,7 @@ function App() {
           <footer className="actions-row">
             <button
               type="button"
+              id="btn-back"
               className="button button--ghost"
               onClick={handleBack}
               disabled={currentStep === 0}
@@ -2044,13 +2479,18 @@ function App() {
             {currentStep < STEP_TITLES.length - 1 ? (
               <button
                 type="button"
+                id="btn-next"
                 className="button button--primary"
                 onClick={handleNext}
               >
                 Continuar
               </button>
             ) : (
-              <button type="submit" className="button button--primary">
+              <button
+                type="submit"
+                id="btn-submit"
+                className="button button--primary"
+              >
                 Finalizar registro
               </button>
             )}
@@ -2062,4 +2502,3 @@ function App() {
 }
 
 export default App;
-
